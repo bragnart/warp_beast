@@ -5,13 +5,13 @@ import os
 import sys
 import asyncio
 from pathlib import Path
-from typing import Type, List, Any, TypeVar, Optional
+from typing import Type, List, Any, TypeVar, Optional, Union
 
 import logfire
 from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 from pydantic_ai import Agent, RunContext, AbstractToolset, ModelMessagesTypeAdapter, ModelRequest, ModelResponse, BinaryContent
-from pydantic_ai.messages import ModelMessage, UserPromptPart, SystemPromptPart, FilePart, BinaryImage
+from pydantic_ai.messages import ModelMessage, UserPromptPart, SystemPromptPart, FilePart, BinaryImage, UserContent, ImageUrl
 from pydantic_ai.direct import model_request
 from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettings, OpenRouterProviderConfig, OpenRouterReasoning
 from pydantic_ai.providers.openrouter import OpenRouterProvider
@@ -168,14 +168,48 @@ class AgentSession:
         )
         self.log.info(f"Получен ответ модели: {response}")
         return response
+    
+    async def run(
+            self,
+            user_msg: str,
+            instruction: Optional[str] = None,
+            image_path: Optional[Union[str, Path]] = None,
+    ):
+        if instruction is None:
+            instruction = self.cfg.run_instruction
+        
+        if image_path:
+            import mimetypes
+            image_path = Path(image_path)
+            image_bytes = image_path.read_bytes()
+            image_media_type, _ = mimetypes.guess_type(image_path)
+            user_msg = [
+                user_msg,
+                BinaryContent(image_bytes, media_type=image_media_type)
+            ]
+            self.log.info(f"Добавлено изображение {str(image_path)} с типом {image_media_type}")
+            #Потом добавить кастомные ошибки и их обработку
+
+        result = await self.runner.run(
+            user_prompt=user_msg,
+            message_history=self.history,
+            instructions=instruction,
+        )
+        self.history.extend(result.new_messages())
+        return result
+
 
 if __name__ == '__main__':
     from rich import print
     cfg = AIConfig(model_name="qwen/qwen3-vl-30b-a3b-thinking", enable_mem0=False, reasoning=True)
     session = AgentSession(config=cfg)
     async def main():
-        response = await session.request_model("Что на картинке этой?", img_file=Path("C:\\Users\\Xiaomi\\Downloads\\generated-image - 2025-12-03T211201.176.png"))
+        response = await session.run("Привет, меня зовут Егор. О себе немного поведай.")
         print(response)
-        print("Ответ модели:", response.text)
-        print("Мысля модели:", response.thinking)
+        print("Ответ модели:", response.output)
+        print("Мысля модели:", response.response.thinking)
+        response = await session.run("Не забыл как меня зовут? Скажи мое имя. И скажи что на картинке изображено.", image_path="src/assets/user_avatar.png")
+        print(response)
+        print("Ответ модели:", response.output)
+        print("Мысля модели:", response.response.thinking)
     asyncio.run(main())

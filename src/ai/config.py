@@ -9,6 +9,7 @@ DATA_DIR = APP_DIR / "assets"
 
 bpf = DATA_DIR / "prompts" / "default_system_prompt.md"
 DEFAULT_SYSTEM_PROMPT = bpf.read_text("utf-8")
+DEFAULT_RUN_INSTRUCTION = "Поразмысли и ответь юзеру корректно."
 
 class AIConfig(BaseModel):
 
@@ -20,6 +21,7 @@ class AIConfig(BaseModel):
     max_tokens: int = Field(default=8000)
     timeout: float = Field(default=30.0)
     system_prompt: str = Field(default=DEFAULT_SYSTEM_PROMPT)
+    run_instruction: str = Field(default=DEFAULT_RUN_INSTRUCTION)
     enable_mem0: bool = Field(default=True)
 
     def to_dict(self) -> dict:
