@@ -14,6 +14,10 @@ def main(page: ft.Page):
     page.window.icon = ft.Icons.BUG_REPORT
     page.bgcolor = ft.Colors.TRANSPARENT
     # page.opacity = 0.7
+
+    page.fonts = {
+        "gothra": "fonts/gothra.ttf",
+    }
     
     app_context = AppContext()
     app_context._page = page

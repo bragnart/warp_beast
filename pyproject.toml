@@ -9,7 +9,7 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "flet (>=0.28.3,<0.29.0)",
+    "flet[all] (>=0.28.3,<0.29.0)",
     "pydantic-ai (>=1.26.0,<2.0.0)",
     "rich (>=14.2.0,<15.0.0)",
     "langchain (>=1.1.2,<2.0.0)",
@@ -19,7 +19,9 @@ dependencies = [
     "pendulum (>=3.1.0,<4.0.0)",
     "mem0ai (>=1.0.1,<2.0.0)",
     "shortuuid (>=1.0.13,<2.0.0)",
-    "loguru (>=0.7.3,<0.8.0)"
+    "loguru (>=0.7.3,<0.8.0)",
+    "blurwindow (>=1.2.1,<2.0.0)",
+    "fletmint (>=0.1.6.2,<0.2.0.0)"
 ]
 
 [tool.poetry]
