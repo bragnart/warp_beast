@@ -156,146 +156,6 @@ final_style = create_markdown_style(my_theme_config)
 # )
 
 
-def make_md_style(
-        font: str, #шрифт для обычного текста, по умолчанию и к другим видам
-        text_size: int, #размер текста
-        main_text_color: str, #цвет основного обычного текста
-        h_text_color: str, #цвет заголовков
-        link_text_color: str, #цвет текста ссылок
-        img_text_color: str, #цвет текста заменяющего картинку
-        strong_text_color: str, #цвет жирного текста
-        em_text_color: str, #курсива
-        del_text_color: str, #зачеркнутого текста
-        cd_text_color: str, #inline блоков кода
-        bq_text_color: str, #цитат
-        cb_text_color: str, #чекбоксов
-        lb_text_color: str, # пунктов списков
-        th_text_color: str, #заголовков таблицы
-        tb_text_color: str, #пунктов таблицы
-        cd_block_color: str, #цвет inline блока кода
-        bq_block_color: str, #блока цитат
-        tc_block_color: str, #ячейки таблицы
-        line_color: str, # цвет линии (которая через ___ делается)
-        cd_font: str = None, #шрифт кода инлайн
-        bq_font: str = None, #шрифт цитат
-):
-    import copy
-    cd_font = cd_font or font
-    bq_font = bq_font or font
-    main_text_style = ft.TextStyle(
-        font_family=font,
-        size=text_size,
-        color=main_text_color
-    )
-    a_text_style = copy.deepcopy(main_text_style)
-    a_text_style.color = link_text_color
-    code_text_style = copy.deepcopy(main_text_style)
-    code_text_style.font_family = cd_font
-    code_text_style.color = cd_text_color
-    em_text_style = copy.deepcopy(main_text_style)
-    em_text_style.color = em_text_color
-    em_text_style.italic = True
-    strong_text_style = copy.deepcopy(main_text_style)
-    strong_text_style.color = strong_text_color
-    strong_text_style.weight = "bold"
-    del_text_style = copy.deepcopy(main_text_style)
-    del_text_style.color = del_text_color
-    del_text_style.decoration = "line_through"
-    bq_text_style = copy.deepcopy(main_text_style)
-    bq_text_style.color = bq_text_color
-    bq_text_style.font_family = bq_font
-    img_text_style = copy.deepcopy(main_text_style)
-    img_text_style.color = img_text_color
-    img_text_style.italic = True
-    cb_text_style = copy.deepcopy(main_text_style)
-    cb_text_style.color = cb_text_color
-    lb_text_style = copy.deepcopy(main_text_style)
-    lb_text_style.color = lb_text_color
-    th_text_style = copy.deepcopy(main_text_style)
-    th_text_style.color = th_text_color
-    th_text_style.weight = "bold"
-    tb_text_style = copy.deepcopy(main_text_style)
-    tb_text_style.color = tb_text_color
-    h = []
-    hsize = text_size
-
-    for _ in range(6):
-        s = copy.deepcopy(main_text_style)
-        s.color = h_text_color
-        s.size = hsize
-        h.append(s)
-        hsize += 3
-
-    
-
-    mds = ft.MarkdownStyleSheet(
-        a_text_style=a_text_style,
-        p_text_style=main_text_style,
-        code_text_style=code_text_style,
-        h1_text_style=h[5],
-        h2_text_style=h[4],
-        h3_text_style=h[3],
-        h4_text_style=h[2],
-        h5_text_style=h[1],
-        h6_text_style=h[0],
-        em_text_style=em_text_style,
-        strong_text_style=strong_text_style,
-        del_text_style=del_text_style,
-        blockquote_text_style=bq_text_style,
-        img_text_style=img_text_style,
-        checkbox_text_style=cb_text_style,
-        list_bullet_text_style=lb_text_style,
-        table_head_text_style=th_text_style,
-        table_body_text_style=tb_text_style,
-        codeblock_decoration=ft.BoxDecoration(
-            #bgcolor=cd_block_color,
-            border=ft.border.all(1, ft.Colors.BLUE_ACCENT),
-            border_radius=ft.border_radius.all(13),
-            shadow=ft.BoxShadow(color=ft.Colors.BLUE_GREY_300, blur_style=ft.ShadowBlurStyle.NORMAL)
-        ),
-        blockquote_decoration=ft.BoxDecoration(
-            #bgcolor=bq_block_color,
-            border=ft.border.all(0.5, ft.Colors.PINK),
-            gradient=ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
-                colors=[bq_block_color, ft.Colors.PINK_ACCENT]
-            )
-        ),
-        table_cells_decoration=ft.BoxDecoration(
-            bgcolor=ft.Colors.with_opacity(0.5, tc_block_color),
-            border=ft.border.all(0.5, tc_block_color)
-        ),
-        horizontal_rule_decoration=ft.BoxDecoration(
-            bgcolor=line_color,
-        )
-    )
-    return mds
-
-
-md_style = make_md_style(
-    "sofia",
-    14,
-    "#082B1E",
-    "#042713",
-    "#05166E",
-    "#FFFFFF",
-    "#0E3124",
-    "#043926",
-    "#97AC0B",
-    "#C6641E",
-    "#931CB7",
-    "#043322",
-    "#606CE9",
-    "#004E31",
-    "#065739",
-    "#BC6069",
-    "#10BACD",
-    "#054B31",
-    "#ED00BD",
-    "manrope",
-    "arsenal"
-)
 #DRAGULA, ATOM, хопскотч, грувбокс дарк, монокай, шейдс оф
 DF_CODETHEMES = [
     ft.MarkdownCodeTheme.AGATE,
@@ -450,128 +310,37 @@ class MsgContainer(ft.Container):
         )
         self.bgcolor = ft.Colors.with_opacity(0.5, ft.Colors.ON_SECONDARY_CONTAINER)
 
-# class BaseMessageDialog(ft.Container):
 
-#     def __init__(
-#             self,
-#             role: str,
-#             avatar_imgpath: str,
-#             message_text: str,
-#             thinking_text: Optional[str] = None,
-#            background_color: str = "#151616",
-#             textcontrol_color: str = "#4286c1",
-#             message_font: str = "gothra",
-#             width: int = 600,
-#             height: int = 200,
-#             **kwargs
-#     ):
-#         super().__init__(**kwargs)
-#         self.role = role
-#         self.avatar_imgpath = avatar_imgpath
-#         self.message_text = message_text
-#         self.thnkngbtn_visible = False
-#         self.thinking_text = thinking_text
-#         if thinking_text is not None:
-#             self.thnkngbtn_visible = True
-#         self.background_color = background_color
-#         self.textcontrol_color = textcontrol_color
-#         self.message_font = message_font
+class ChatContainer(ft.Container):
+
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.width = width
+        self.height = height
+
+
+        self.bgcolor = ft.Colors.ON_SURFACE
+
+        self.chat_column = ft.Column(
+            expand=True,
+            scroll=ft.ScrollMode.ALWAYS,
+        )
+        self.content = self.chat_column
+
+    def add_msg_container(self, mc: MsgContainer):
+        self.chat_column.controls.append(mc)
+        self.update()
 
         
-#         self.width = width
-#         self.height = height
-#         self.padding = 10
-#         self.margin = ft.margin.all(10)
-#         self.bgcolor = self.background_color
-#         self.border_radius = ft.border_radius.all(17)
-#         self.shadow = [
-#             ft.BoxShadow(
-#                 offset=ft.Offset(27, 27),
-#                 blur_radius=30,
-#                 blur_style=ft.ShadowBlurStyle.NORMAL,
-#                 color="#5c9f8c"
-#             ),
-#             ft.BoxShadow(
-#                 offset=ft.Offset(-27, -27),
-#                 blur_radius=30,
-#                 blur_style=ft.ShadowBlurStyle.NORMAL,
-#                 color="#9aead8"
-#             )
-#         ]
-
-
-
-#         self.avatar = ft.Column(
-#             controls=[
-#                 ft.CircleAvatar(
-#                     radius=40,
-#                     foreground_image_src=self.avatar_imgpath,
-#                 ),
-#                 ft.Text(
-#                     self.role.capitalize(),
-#                     color=ft.Colors.PURPLE_ACCENT_100,
-#                     size=16,
-#                 )
-#             ]
-#         )
-
-#         self.msgtxt = ft.Markdown(
-#             value=self.message_text,
-#             selectable=False,
-#             extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
-#             code_theme=ft.MarkdownCodeTheme.MAGULA,
-#             )
-
-#         self.thnkngtxt = ft.Markdown(
-#             value=self.thinking_text if self.thinking_text else "Thinking...",
-#             selectable=False,
-#             extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
-#             code_theme=ft.MarkdownCodeTheme.MAGULA,
-#             visible=False
-#             )
-        
-#         self.thnkngbtn = ft.TextButton(
-#             text="Мысли ИИ-агента",
-#             icon=ft.Icons.POLICY,
-#             on_click=self._on_thinking_click,
-#             visible=self.thnkngbtn_visible
-#         )
-
-#         self.msgclmn = ft.Column(
-#             controls=[self.msgtxt, self.thnkngtxt, self.thnkngbtn],
-#             alignment=ft.MainAxisAlignment.CENTER,
-#             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-#             expand=True,
-#             scroll=ft.ScrollMode.AUTO,
-#         )
-
-#         self.content = ft.Row(
-#             controls=[
-#                 self.avatar,
-#                 self.msgclmn
-#             ],
-#             alignment=ft.MainAxisAlignment.START,
-#             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-#             expand=True
-#         )
-
-#     def _on_thinking_click(self, e: ft.ControlEvent):
-#         self.thnkngtxt.visible = not self.thnkngtxt.visible
-#         self.thnkngtxt.update()
 
 
 
 if __name__ == '__main__':
-#     TXT="""
-#     ```python
-#     # src/gui/components/dialog/base_message.py
-#     import flet as ft
-
-#     from typing import Optional
-
-#     ```
-#     """
-#     THT = "Это мысли ИИ-агента, которые можно показать или скрыть по нажатию кнопки. **Это пример диалогового окна с аватаром, сообщением и кнопкой для отображения мыслей агента.**"*10
     src_dir = Path(__file__).parent.parent.parent.parent
     asts_dir = src_dir / "assets"
     fonts_dir = asts_dir / "fonts"
@@ -629,6 +398,18 @@ ___________________________________
             "manrope": str(mr),
         }
         page.theme_mode = ft.ThemeMode.DARK
+
+        def pr(t:str):
+            print(t)
+
+        page.data = {
+            "pr": pr,
+        }
+        
+
+        cct = ChatContainer(550, 670)
+        page.add(cct)
+
         cnt = MsgContainer(
             width=500,
             height=200,
@@ -636,7 +417,12 @@ ___________________________________
             msg_txt=dsp0,
             thought_txt=dsp0,
         )
-        page.add(cnt)
+        cnt0 = MsgContainer(
+            500, 200, 50, dsp0, None, "user", "fox"
+        )
+        cct.add_msg_container(cnt)
+        cct.add_msg_container(cnt0)
         
+
 
     ft.app(target=main, assets_dir="D:\\myworks\\agents\\warp_beast\\src\\assets")
