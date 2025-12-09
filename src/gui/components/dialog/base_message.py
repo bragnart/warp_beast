@@ -2,13 +2,159 @@
 import flet as ft
 from pathlib import Path
 from typing import Optional
+from flet.core.types import ColorValue, OptionalNumber
+from pydantic import BaseModel, Field
 
-COLORS = {
-    "msgbox_bg": "#151616",
-    "msgbox_lght": "#3d3e3e",
-    "msgbox_dk": "#0d0d0d",
+# -----------------------------------------------------------------------------
+# 1. Конфигурация темы (Pydantic V2)
+# -----------------------------------------------------------------------------
+class MdTheme(BaseModel):
+    """
+    Класс конфигурации для стилей Markdown.
+    Позволяет задать все цвета и шрифты в одном месте с валидацией.
+    """
+    # Шрифты
+    font_main: str = Field("sofia", description="Шрифт для основного текста")
+    font_code: str = Field("manrope", description="Шрифт для блоков кода (моноширинный)")
+    font_quote: str = Field("arsenal", description="Шрифт для цитат")
     
-}
+    # Размеры
+    text_size: int = Field(14, description="Базовая размерность текста (px)")
+    header_scale: float = Field(1.15, description="Множитель увеличения заголовков (h6 -> h1)")
+
+    # Цвета текста
+    color_main: ColorValue = Field("#082B1E", description="Цвет основного текста")
+    color_headers: ColorValue = Field("#042713", description="Цвет заголовков (h1-h6)")
+    color_link: ColorValue = Field("#05166E", description="Цвет ссылок")
+    color_strong: ColorValue = Field("#0E3124", description="Цвет жирного текста")
+    color_em: ColorValue = Field("#043926", description="Цвет курсива")
+    color_del: ColorValue = Field("#465000", description="Цвет зачеркнутого текста")
+    
+    # Цвета элементов списка и таблиц
+    color_list_bullet: ColorValue = Field("#606CE9", description="Цвет маркеров списка")
+    color_table_head: ColorValue = Field("#004E31", description="Цвет текста заголовков таблицы")
+    color_table_body: ColorValue = Field("#065739", description="Цвет текста ячеек таблицы")
+    
+    # Цвета блоков (фоны и границы)
+    color_code_text: ColorValue = Field("#5D0DA8", description="Цвет текста внутри inline кода")
+    color_code_bg: ColorValue = Field("#7E10DE", description="Основной цвет оформления блока кода (используется для фона с прозрачностью)")
+    color_quote_text: ColorValue = Field("#931CB7", description="Цвет текста цитаты")
+    color_quote_border: ColorValue = Field("#ED00BD", description="Цвет боковой линии цитаты")
+    color_quote_bg: ColorValue = Field("#10BACD", description="Фон цитаты")
+    
+    color_checkbox: ColorValue = Field("#043322", description="Цвет текста чекбоксов")
+    color_img_text: ColorValue = Field("#FFFFFF", description="Цвет alt-текста картинок")
+    color_divider: ColorValue = Field("#054B31", description="Цвет разделительной линии (hr)")
+
+
+# -----------------------------------------------------------------------------
+# 2. Фабрика стилей
+# -----------------------------------------------------------------------------
+def create_markdown_style(theme: MdTheme) -> ft.MarkdownStyleSheet:
+    """
+    Генерирует ft.MarkdownStyleSheet на основе переданной Pydantic-темы.
+    """
+    
+    # Общие параметры, которые есть ВЕЗДЕ (шрифт и размер)
+    # Цвет мы сюда НЕ кладем, чтобы не было конфликтов
+    common_props = {
+        "font_family": theme.font_main,
+        "size": theme.text_size,
+    }
+    
+    # 1. Генерация стилей заголовков
+    heading_styles = {}
+    current_size = theme.text_size
+    
+    for i in range(6, 0, -1):
+        heading_styles[f"h{i}_text_style"] = ft.TextStyle(
+            font_family=theme.font_main,
+            color=theme.color_headers,
+            size=int(current_size),
+            weight=ft.FontWeight.BOLD,
+        )
+        current_size *= theme.header_scale
+
+    # 2. Сборка объекта
+    return ft.MarkdownStyleSheet(
+        # --- Основной текст ---
+        # Тут добавляем color_main к общим свойствам
+        p_text_style=ft.TextStyle(**common_props, color=theme.color_main),
+        
+        # --- Ссылки (переопределяем цвет) ---
+        a_text_style=ft.TextStyle(**common_props, color=theme.color_link),
+        
+        # --- Жирный / Курсив / Зачеркнутый ---
+        strong_text_style=ft.TextStyle(**common_props, color=theme.color_strong, weight=ft.FontWeight.BOLD),
+        em_text_style=ft.TextStyle(**common_props, color=theme.color_em, italic=True),
+        del_text_style=ft.TextStyle(**common_props, color=theme.color_del, decoration=ft.TextDecoration.LINE_THROUGH),
+        
+        # --- Списки ---
+        list_bullet_text_style=ft.TextStyle(**common_props, color=theme.color_list_bullet, decoration=ft.TextDecoration.UNDERLINE, decoration_style=ft.TextDecorationStyle.DOTTED),
+        checkbox_text_style=ft.TextStyle(**common_props, color=theme.color_checkbox),
+        
+        # --- Заголовки ---
+        **heading_styles,
+
+        # --- Код ---
+        code_text_style=ft.TextStyle(
+            font_family=theme.font_code,
+            size=theme.text_size,
+            color=theme.color_code_text,
+            bgcolor=ft.Colors.with_opacity(0.1, theme.color_code_bg) if theme.color_code_bg else None
+        ),
+        codeblock_decoration=ft.BoxDecoration(
+            #bgcolor=ft.Colors.with_opacity(0.05, theme.color_code_bg),
+            border=ft.border.all(2, ft.Colors.CYAN_300),
+            border_radius=ft.border_radius.only(bottom_left=20, top_right=20, bottom_right=13, top_left=13)
+        ),
+
+        # --- Цитаты ---
+        blockquote_text_style=ft.TextStyle(
+            font_family=theme.font_quote,
+            size=theme.text_size,
+            color=theme.color_quote_text,
+            italic=True
+        ),
+        blockquote_decoration=ft.BoxDecoration(
+            bgcolor=ft.Colors.with_opacity(0.1, theme.color_quote_bg),
+            border=ft.border.only(left=ft.BorderSide(4, theme.color_quote_border)),
+            border_radius=ft.border_radius.only(top_right=10, bottom_right=10)
+        ),
+
+        # --- Таблицы ---
+        table_head_text_style=ft.TextStyle(**common_props, color=theme.color_table_head, weight=ft.FontWeight.BOLD),
+        table_body_text_style=ft.TextStyle(**common_props, color=theme.color_table_body),
+        table_cells_decoration=ft.BoxDecoration(
+             border=ft.border.all(0.5, ft.Colors.with_opacity(0.2, theme.color_table_body))
+        ),
+
+        # --- Разное ---
+        img_text_style=ft.TextStyle(**common_props, color=theme.color_img_text, italic=True),
+        horizontal_rule_decoration=ft.BoxDecoration(
+            border=ft.border.all(1, theme.color_divider)
+        ),
+        
+        block_spacing=15,
+    )
+
+
+# -----------------------------------------------------------------------------
+# 3. Пример использования
+# -----------------------------------------------------------------------------
+
+# Создаем конфиг темы (валидация происходит здесь)
+my_theme_config = MdTheme()
+# Генерируем стиль
+final_style = create_markdown_style(my_theme_config)
+
+# Используем в Flet
+# ft.Markdown(
+#    value="# Привет \nТекст...", 
+#    md_style_sheet=final_style,
+#    extension_set=ft.MarkdownExtensionSet.GITHUB_WEB  # ВАЖНО для таблиц и зачеркивания!
+# )
+
 
 def make_md_style(
         font: str, #шрифт для обычного текста, по умолчанию и к другим видам
@@ -102,8 +248,10 @@ def make_md_style(
         table_head_text_style=th_text_style,
         table_body_text_style=tb_text_style,
         codeblock_decoration=ft.BoxDecoration(
-            bgcolor=cd_block_color,
-            border=ft.border.all(0.5, ft.Colors.AMBER)
+            #bgcolor=cd_block_color,
+            border=ft.border.all(1, ft.Colors.BLUE_ACCENT),
+            border_radius=ft.border_radius.all(13),
+            shadow=ft.BoxShadow(color=ft.Colors.BLUE_GREY_300, blur_style=ft.ShadowBlurStyle.NORMAL)
         ),
         blockquote_decoration=ft.BoxDecoration(
             #bgcolor=bq_block_color,
@@ -119,126 +267,10 @@ def make_md_style(
             border=ft.border.all(0.5, tc_block_color)
         ),
         horizontal_rule_decoration=ft.BoxDecoration(
-            bgcolor=line_color
+            bgcolor=line_color,
         )
     )
     return mds
-
-dark_markdown_style = ft.MarkdownStyleSheet(
-
-
-    # Основные стили текста
-    p_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_100,
-        size=14,
-        font_family="gothra"
-    ),
-    
-    # Заголовки (h1-h6) - светлые и крупные
-    h1_text_style=ft.TextStyle(
-        color=ft.Colors.WHITE,
-        size=28,
-        weight="bold",
-        font_family="gothra"
-    ),
-    h2_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_50,
-        size=24,
-        weight="bold",
-        font_family="gothra"
-    ),
-    h3_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_100,
-        size=20,
-        weight="bold",
-        font_family="gothra"
-    ),
-    h4_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_200,
-        size=18,
-        weight="w500",
-        font_family="gothra"
-    ),
-    h5_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_200,
-        size=16,
-        weight="w500",
-        font_family="gothra"
-    ),
-    h6_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_200,
-        size=14,
-        font_family="gothra"
-    ),
-    
-    # Ссылки - яркие
-    a_text_style=ft.TextStyle(
-        color=ft.Colors.CYAN_400,
-        size=14,
-        font_family="gothra"
-    ),
-    
-    # Код в строке (inline)
-    code_text_style=ft.TextStyle(
-        color=ft.Colors.AMBER_200,
-        size=6,
-        font_family="gothra",
-        bgcolor=ft.Colors.GREY_900  # Тёмный фон для кода
-    ),
-    
-    # Блок кода
-    codeblock_padding=ft.padding.all(12),
-    codeblock_decoration=ft.BoxDecoration(
-        bgcolor=ft.Colors.RED_ACCENT,
-        border_radius=6
-    ),
-    
-    # Жирный текст
-    strong_text_style=ft.TextStyle(
-        color=ft.Colors.GREEN,
-        weight="bold",
-        font_family="gothra"
-    ),
-    
-    # Курсив
-    em_text_style=ft.TextStyle(
-        color=ft.Colors.DEEP_ORANGE_100,
-        italic=True,
-        font_family="gothra"
-    ),
-    
-    # Зачёркнутый текст
-    del_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_500,
-        decoration="line_through",
-        font_family="gothra"
-    ),
-    
-    # Кавычки
-    blockquote_text_style=ft.TextStyle(
-        color=ft.Colors.GREY_300,
-        size=14,
-        italic=True,
-        font_family="gothra"
-    ),
-    blockquote_padding=ft.padding.only(left=12, top=8, bottom=8, right=8),
-    blockquote_decoration=ft.BoxDecoration(
-        border=ft.border.only(
-            left=ft.BorderSide(2, ft.Colors.CYAN_400)
-        ),
-        bgcolor=ft.Colors.BLUE_GREY
-    ),
-    
-    # Пули списков
-    list_bullet_text_style=ft.TextStyle(
-        color=ft.Colors.CYAN_400,
-        font_family="gothra"
-    ),
-    
-    # Промежутки
-    block_spacing=16,
-    list_indent=24
-)
 
 
 md_style = make_md_style(
@@ -264,6 +296,22 @@ md_style = make_md_style(
     "manrope",
     "arsenal"
 )
+#DRAGULA, ATOM, хопскотч, грувбокс дарк, монокай, шейдс оф
+DF_CODETHEMES = [
+    ft.MarkdownCodeTheme.AGATE,
+    ft.MarkdownCodeTheme.DRAGULA,
+    ft.MarkdownCodeTheme.ATOM_ONE_DARK_REASONABLE,
+    ft.MarkdownCodeTheme.HOPSCOTCH,
+    ft.MarkdownCodeTheme.GRUVBOX_DARK,
+    ft.MarkdownCodeTheme.MONOKAI,
+    ft.MarkdownCodeTheme.MONOKAI_SUBLIME,
+    ft.MarkdownCodeTheme.SHADES_OF_PURPLE,
+]
+
+def random_codetheme():
+    from random import choice
+    return choice(DF_CODETHEMES)
+
 
 class Avatar(ft.Column):
 
@@ -271,9 +319,9 @@ class Avatar(ft.Column):
             self,
             role: str,
             image_path: str | Path,
-            role_txt_color: str = "#BD5AA9",
+            role_txt_color: str = "#3C0F33",
             size: int = 50,
-            font: str = "Roboto",
+            font: str = "gothra",
             **kwargs
     ):
         super().__init__(**kwargs)
@@ -283,7 +331,7 @@ class Avatar(ft.Column):
         self.size = size
         self.width = size+15
 
-
+        
 
         self.pic = ft.Image(
             src=str(self.image_path),
@@ -311,27 +359,35 @@ class MsgTextColumn(ft.Column):
             self,
             msg_txt: str,
             thought_txt: Optional[str] = None,
+            txt_md_style: Optional[ft.MarkdownStyleSheet] = None,
+            tht_md_style: Optional[ft.MarkdownStyleSheet] = None,
+            codetheme: Optional[ft.MarkdownCodeTheme] = None,
             **kwargs
     ):
         super().__init__(**kwargs)
         self.msg_txt = msg_txt
         self.thought_txt = thought_txt
+        self.txt_md_style = txt_md_style or final_style
+        self.tht_md_style = tht_md_style or final_style
+        self.codetheme = codetheme if codetheme is not None else random_codetheme()
+
 
 
         self.msg_txt_mkdn = ft.Markdown(
             value=self.msg_txt,
             selectable=True,
-            extension_set=ft.MarkdownExtensionSet.COMMON_MARK,
-            code_theme=ft.MarkdownCodeTheme.BROWN_PAPER,
-            md_style_sheet=md_style,
+            extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
+            code_theme=self.codetheme,
+            md_style_sheet=self.txt_md_style,
             
         )
         te = True if self.thought_txt is not None else False
         self.thought_txt_mkdn = ft.Markdown(
             value=self.thought_txt,
             selectable=True,
-            extension_set=ft.MarkdownExtensionSet.COMMON_MARK,
-            code_theme=ft.MarkdownCodeTheme.ATELIER_DUNE_DARK,
+            extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
+            code_theme=self.codetheme,
+            md_style_sheet=self.tht_md_style,
             visible=False,
         )
         self.thought_txt_btn = ft.TextButton(
@@ -364,17 +420,16 @@ class MsgContainer(ft.Container):
             msg_txt: str,
             thought_txt: Optional[str] = None,
             role: str = "agent",
+            img: str = "seal",
             **kwargs
     ):
         super().__init__(**kwargs)
         self.width = width
         self.height = height
-        self.border_radius = ft.border_radius.all(17)
+        self.border_radius = ft.border_radius.only(top_left=20, bottom_left=20)
+        self.border = ft.border.all(1, ft.Colors.BLACK45)
 
-        if role =="agent":
-            av_img = Path("src/assets/agent_avatar.png")
-        else:
-            av_img = Path("src/assets/user_avatar.png")
+        av_img = Path(f"src/assets/{img}.png")
         
         self.avatar = Avatar(
             role=role,
@@ -526,6 +581,45 @@ if __name__ == '__main__':
     mr = fonts_dir / "manrope.ttf"
     dsp = asts_dir / "prompts" / "default_system_prompt.md"
     dsp0 = dsp.read_text("utf-8")
+    dsp0 = """```python
+    class MsgTextColumn(ft.Column):
+
+    def __init__(
+            self,
+            msg_txt: str,
+            thought_txt: Optional[str] = None,
+            txt_md_style: Optional[ft.MarkdownStyleSheet] = None,
+            tht_md_style: Optional[ft.MarkdownStyleSheet] = None,
+            **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.msg_txt = msg_txt
+        self.thought_txt = thought_txt
+        self.txt_md_style = txt_md_style or md_style
+        self.tht_md_style = tht_md_style or md_style
+```
+
+#### Проверка
+
+Ну сперва проверим **жирный текст**, *курсив*, ~~зачеркнутый~~ или __вот__
+Потом ``import inline code`` и также
+>простая такая цитата
+
+###### Тест
+
+##### Test
+
+#### Test
+
+### Test
+
+## Test
+
+# Test
+
+___________________________________
+
+"""
     def main(page: ft.Page):
         page.window.icon = "icon.ico"
         page.fonts = {
@@ -539,7 +633,8 @@ if __name__ == '__main__':
             width=500,
             height=200,
             avatar_size=50,
-            msg_txt=dsp0
+            msg_txt=dsp0,
+            thought_txt=dsp0,
         )
         page.add(cnt)
         
