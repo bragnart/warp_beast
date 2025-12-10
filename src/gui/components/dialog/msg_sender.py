@@ -30,6 +30,7 @@ class MsgSender(ft.Stack):
 
         self.input = ft.TextField(
             multiline=True,
+            min_lines=3,
             shift_enter=True,
             autofocus=True,
             expand=True,
@@ -59,7 +60,9 @@ class MsgSender(ft.Stack):
 
     async def _send(self, e):
         msg_txt = self.input.value
-        self.input.value = ""
-        self.update()
-        self.parent._send(msg_txt)
+        if msg_txt.lstrip():
+            self.input.value = ""
+            self.update()
+            self.parent._send(msg_txt)
+
 
