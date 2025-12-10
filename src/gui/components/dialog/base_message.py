@@ -5,6 +5,26 @@ from typing import Optional
 from flet.core.types import ColorValue, OptionalNumber
 from pydantic import BaseModel, Field
 
+ASSETS_DIR = Path(__file__).parent.parent.parent.parent / "assets"
+
+
+#DRAGULA, ATOM, хопскотч, грувбокс дарк, монокай, шейдс оф
+DF_CODETHEMES = [
+    ft.MarkdownCodeTheme.AGATE,
+    ft.MarkdownCodeTheme.DRAGULA,
+    ft.MarkdownCodeTheme.ATOM_ONE_DARK_REASONABLE,
+    ft.MarkdownCodeTheme.HOPSCOTCH,
+    ft.MarkdownCodeTheme.GRUVBOX_DARK,
+    ft.MarkdownCodeTheme.MONOKAI,
+    ft.MarkdownCodeTheme.MONOKAI_SUBLIME,
+    ft.MarkdownCodeTheme.SHADES_OF_PURPLE,
+]
+
+def random_codetheme():
+    from random import choice
+    return choice(DF_CODETHEMES)
+
+
 # -----------------------------------------------------------------------------
 # 1. Конфигурация темы (Pydantic V2)
 # -----------------------------------------------------------------------------
@@ -155,22 +175,42 @@ final_style = create_markdown_style(my_theme_config)
 #    extension_set=ft.MarkdownExtensionSet.GITHUB_WEB  # ВАЖНО для таблиц и зачеркивания!
 # )
 
+class AvatarTheme(BaseModel):
+    size: int = Field(50, description="Размер аватара (px)")
+    role_txt_color: ColorValue = Field("#3C0F33", description="Цвет текста роли")
+    role_txt_size: int = Field(15, description="Размер шрифта подписи")
+    font: str = Field("gothra", description="Шрифт подписи под аватаром")
+    img_dict: dict = Field({"agent": "seal", "user": "tiger"}, description="Картинки по ролям")
 
-#DRAGULA, ATOM, хопскотч, грувбокс дарк, монокай, шейдс оф
-DF_CODETHEMES = [
-    ft.MarkdownCodeTheme.AGATE,
-    ft.MarkdownCodeTheme.DRAGULA,
-    ft.MarkdownCodeTheme.ATOM_ONE_DARK_REASONABLE,
-    ft.MarkdownCodeTheme.HOPSCOTCH,
-    ft.MarkdownCodeTheme.GRUVBOX_DARK,
-    ft.MarkdownCodeTheme.MONOKAI,
-    ft.MarkdownCodeTheme.MONOKAI_SUBLIME,
-    ft.MarkdownCodeTheme.SHADES_OF_PURPLE,
-]
+class MsgTextTheme(BaseModel):
+    md_theme: "MdTheme" = Field(default_factory=lambda: MdTheme())
+    code_theme: ft.MarkdownCodeTheme = Field(
+        default_factory=random_codetheme, description="Тема подсветки кода"
+    )
+    show_thoughts_button_text: str = Field("Мысли агента", description="Текст кнопки показа мыслей")
+    thoughts_icon: str = Field(ft.Icons.DATA_OBJECT, description="Иконка для кнопки мыслей")
 
-def random_codetheme():
-    from random import choice
-    return choice(DF_CODETHEMES)
+class MsgContainerTheme(BaseModel):
+    width: OptionalNumber = Field(500, description="Ширина контейнера сообщения")
+    height: OptionalNumber = Field(200, description="Высота контейнера сообщения")
+    border_radius: int = Field(20, description="Радиус скругления")
+    border_color: ColorValue = Field(ft.Colors.BLACK45, description="Цвет границы")
+    border_width: float = Field(1.0, description="Толщина границы")
+    bgcolor_opacity: float = Field(0.5, description="Прозрачность фона")
+    bgcolor: ColorValue = Field(
+        ft.Colors.ON_SECONDARY_CONTAINER, description="Базовый цвет фона"
+    )
+    avatar_theme: AvatarTheme = Field(default=AvatarTheme())
+    msg_txt_theme: MsgTextTheme = Field(default=MsgTextTheme())
+
+class ChatContainerTheme(BaseModel):
+    width: OptionalNumber = Field(550, description="Ширина чата")
+    height: OptionalNumber = Field(670, description="Высота чата")
+    bgcolor: ColorValue = Field(ft.Colors.ON_SURFACE, description="Фон чата")
+    scroll: ft.ScrollMode = Field(ft.ScrollMode.ALWAYS, description="Режим скролла")
+    block_spacing: int = Field(15, description="Отступ между сообщениями")
+    border_radius: int = Field(25)
+
 
 
 class Avatar(ft.Column):
@@ -178,23 +218,23 @@ class Avatar(ft.Column):
     def __init__(
             self,
             role: str,
-            image_path: str | Path,
-            role_txt_color: str = "#3C0F33",
-            size: int = 50,
-            font: str = "gothra",
+            theme: AvatarTheme = None,
             **kwargs
     ):
         super().__init__(**kwargs)
+        if theme is None:
+            theme = AvatarTheme()
         self.role = role
-        self.image_path = Path(image_path)
-        self.role_txt_color = role_txt_color
-        self.size = size
-        self.width = size+15
+        self.img_path = ASSETS_DIR / f"{theme.img_dict[role]}.png"
+        #надо будет к page.data["assets_path"]
+        self.role_txt_color = theme.role_txt_color
+        self.size = theme.size
+        self.width = self.size+15
 
         
 
         self.pic = ft.Image(
-            src=str(self.image_path),
+            src=str(self.img_path),
             width=self.size,
             height=self.size
         )
@@ -203,7 +243,7 @@ class Avatar(ft.Column):
             #text_align=ft.TextAlign.CENTER,
             color=self.role_txt_color,
             weight=ft.FontWeight.BOLD,
-            font_family=font,
+            font_family=theme.font,
         )
         self.controls = [
             self.pic,
@@ -219,17 +259,14 @@ class MsgTextColumn(ft.Column):
             self,
             msg_txt: str,
             thought_txt: Optional[str] = None,
-            txt_md_style: Optional[ft.MarkdownStyleSheet] = None,
-            tht_md_style: Optional[ft.MarkdownStyleSheet] = None,
-            codetheme: Optional[ft.MarkdownCodeTheme] = None,
+            theme: Optional[MsgTextTheme] = None,
             **kwargs
     ):
         super().__init__(**kwargs)
         self.msg_txt = msg_txt
         self.thought_txt = thought_txt
-        self.txt_md_style = txt_md_style or final_style
-        self.tht_md_style = tht_md_style or final_style
-        self.codetheme = codetheme if codetheme is not None else random_codetheme()
+        if theme is None:
+            theme = MsgTextTheme()
 
 
 
@@ -237,8 +274,8 @@ class MsgTextColumn(ft.Column):
             value=self.msg_txt,
             selectable=True,
             extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
-            code_theme=self.codetheme,
-            md_style_sheet=self.txt_md_style,
+            code_theme=theme.code_theme,
+            md_style_sheet=create_markdown_style(theme.md_theme)
             
         )
         te = True if self.thought_txt is not None else False
@@ -246,13 +283,13 @@ class MsgTextColumn(ft.Column):
             value=self.thought_txt,
             selectable=True,
             extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
-            code_theme=self.codetheme,
-            md_style_sheet=self.tht_md_style,
+            code_theme=theme.code_theme,
+            md_style_sheet=create_markdown_style(theme.md_theme),
             visible=False,
         )
         self.thought_txt_btn = ft.TextButton(
-            text="Мысли агента",
-            icon=ft.Icons.DATA_OBJECT,
+            text=theme.show_thoughts_button_text,
+            icon=theme.thoughts_icon,
             visible=te,
             on_click=self._th_click,
         )
@@ -274,31 +311,26 @@ class MsgContainer(ft.Container):
 
     def __init__(
             self,
-            width: int,
-            height: int,
-            avatar_size: int,
+            role: str,
             msg_txt: str,
             thought_txt: Optional[str] = None,
-            role: str = "agent",
-            img: str = "seal",
+            theme: Optional[MsgContainerTheme] = None,
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.width = width
-        self.height = height
-        self.border_radius = ft.border_radius.only(top_left=20, bottom_left=20)
-        self.border = ft.border.all(1, ft.Colors.BLACK45)
+        if theme is None:
+            theme = MsgContainerTheme()
+        self.width = theme.width
+        self.height = theme.height
+        self.border_radius = ft.border_radius.all(theme.border_radius)
+        self.border = ft.border.all(theme.border_width, theme.border_color)
 
-        av_img = Path(f"src/assets/{img}.png")
         
-        self.avatar = Avatar(
-            role=role,
-            image_path=av_img,
-            size=avatar_size
-        )
+        self.avatar = Avatar(role, theme.avatar_theme)
         self.txtmsgcolumn = MsgTextColumn(
             msg_txt=msg_txt,
-            thought_txt=thought_txt
+            thought_txt=thought_txt,
+            theme=theme.msg_txt_theme
         )
 
         self.content = ft.Row(
@@ -308,27 +340,30 @@ class MsgContainer(ft.Container):
             ],
 
         )
-        self.bgcolor = ft.Colors.with_opacity(0.5, ft.Colors.ON_SECONDARY_CONTAINER)
+        self.bgcolor = ft.Colors.with_opacity(theme.bgcolor_opacity, theme.bgcolor)
 
 
 class ChatContainer(ft.Container):
 
     def __init__(
             self,
-            width: int,
-            height: int,
+            theme: Optional[ChatContainerTheme] = None,
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.width = width
-        self.height = height
+        if theme is None:
+            theme = ChatContainerTheme()
+        self.width = theme.width
+        self.height = theme.height
 
 
-        self.bgcolor = ft.Colors.ON_SURFACE
+        self.bgcolor = theme.bgcolor
+        self.border_radius = ft.border_radius.all(theme.border_radius)
 
         self.chat_column = ft.Column(
             expand=True,
-            scroll=ft.ScrollMode.ALWAYS,
+            scroll=theme.scroll,
+            spacing=theme.block_spacing,
         )
         self.content = self.chat_column
 
@@ -407,21 +442,13 @@ ___________________________________
         }
         
 
-        cct = ChatContainer(550, 670)
+        cct = ChatContainer(theme=ChatContainerTheme(bgcolor="#4FC4C4"))
+        m0 = MsgContainer("user", "kjljlkj;o;j;sdfskfj;doifdgijbfgj")
         page.add(cct)
-
-        cnt = MsgContainer(
-            width=500,
-            height=200,
-            avatar_size=50,
-            msg_txt=dsp0,
-            thought_txt=dsp0,
-        )
-        cnt0 = MsgContainer(
-            500, 200, 50, dsp0, None, "user", "fox"
-        )
-        cct.add_msg_container(cnt)
-        cct.add_msg_container(cnt0)
+        cct.add_msg_container(m0)
+        for _ in range(6):
+            m = MsgContainer("agent", "iouhihuou", "iluuy")
+            cct.add_msg_container(m)
         
 
 
