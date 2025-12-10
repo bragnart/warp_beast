@@ -75,6 +75,25 @@ class ChatView(ft.View):
         ]
         
     def _send(self, msg_txt):
-        print(msg_txt)
+        cnt = MsgContainer(
+            role="user",
+            msg_txt=msg_txt,
+            theme=self.theme.msg_cnt_theme
+        )
+        self.chat.add_msg_container(cnt)
+        self.update()
+        func = self.page.data["funcs"]["send_msg"]
+        self.page.run_task(func, msg_txt=msg_txt)
+
+    def _receive(self, response):
+        cnt = MsgContainer(
+            role="agent",
+            msg_txt=response.output,
+            thought_txt=response.response.thinking,
+            theme=self.theme.msg_cnt_theme
+        )
+        self.chat.add_msg_container(cnt)
+        self.update()
+        
 
 
