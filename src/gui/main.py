@@ -15,7 +15,7 @@ from .components.dialog import ChatView, ChatViewTheme, MsgContainer, MsgContain
 
 def main(page: ft.Page):
     page.window.width = 560
-    page.window.height = 820
+    page.window.height = 800
     page.window.bgcolor = ft.Colors.TRANSPARENT
     page.window.icon = "icon.ico"
     page.window.center()
