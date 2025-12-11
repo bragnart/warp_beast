@@ -1,6 +1,7 @@
 # src/gui/components/dialog/chat_view.py
 import flet as ft
 from typing import List, Optional, Literal
+from pathlib import Path
 from pydantic import BaseModel, Field
 
 
