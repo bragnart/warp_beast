@@ -52,11 +52,14 @@ def main(page: ft.Page):
 
     page.go("chat_view")
 
-    async def send_msg(msg_txt: str):
+    async def send_msg(msg_txt: str, image_path: Optional[Path] = None):
         session: AgentSession = page.data["session"]
-        response = await session.run(user_msg=msg_txt)
+        response = await session.run(
+            user_msg=msg_txt,
+            image_path=image_path  # Уже поддерживается!
+        )
         chat_view._receive(response)
-    
+
     page.data["funcs"]["send_msg"] = send_msg
 
 if __name__ == '__main__':

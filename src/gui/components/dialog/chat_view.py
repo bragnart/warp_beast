@@ -75,16 +75,19 @@ class ChatView(ft.View):
             self.sender,
         ]
         
-    def _send(self, msg_txt):
+    def _send(self, msg_txt: str, image_path: Optional[Path] = None):
+        # Показываем сообщение пользователя с превью картинки
         cnt = MsgContainer(
             role="user",
             msg_txt=msg_txt,
+            image_path=image_path,  # Добавить поддержку в MsgContainer
             theme=self.theme.msg_cnt_theme
         )
         self.chat.add_msg_container(cnt)
         self.update()
+        
         func = self.page.data["funcs"]["send_msg"]
-        self.page.run_task(func, msg_txt=msg_txt)
+        self.page.run_task(func, msg_txt=msg_txt, image_path=image_path)
 
     def _receive(self, response):
         cnt = MsgContainer(
