@@ -3,6 +3,9 @@ from __future__ import annotations
 import flet as ft
 import asyncio
 
+from typing import Optional
+from pathlib import Path
+
 from src.ai import AgentSession, AIConfig
 
 from .constants import ASSETS_PATH, FONT_DICT
@@ -26,7 +29,7 @@ def main(page: ft.Page):
         "session": None,
     }
 
-    ai_config = AIConfig(model_name="google/gemini-2.5-flash-lite", enable_mem0=False)
+    ai_config = AIConfig(model_name="x-ai/grok-4.1-fast", enable_mem0=False)
 
     page.data["ai_config"] = ai_config
 
