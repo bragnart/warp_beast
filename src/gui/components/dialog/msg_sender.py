@@ -6,12 +6,12 @@ from pydantic import BaseModel, Field
 
 class MsgSenderTheme(BaseModel):
     width: int = Field(550)
-    height: int = Field(100)
+    height: int = Field(90)
     input_font: str = Field("arsenal")
     input_txtsize: int = Field(16)
-    input_bgcolor: str = Field("#7F85C4")
-    input_color: str = Field("#CD12BD")
-    input_bordercolor: str = Field("#ABF15A")
+    input_bgcolor: str = Field("#A9AEE6")
+    input_color: str = Field("#74046B")
+    input_bordercolor: str = Field("#4366E6")
     input_borderradius: int = Field(15)
     btn_icon: str = Field("send")
     attach_icon: str = Field("attach_file")  # Новое поле
@@ -35,10 +35,15 @@ class MsgSender(ft.Stack):
             on_result=self._on_file_picked
         )
         
+        self._preview = ft.Image(
+            src=None,
+            width=50,
+            height=50
+        )
         # Превью прикреплённого изображения
         self.image_preview = ft.Container(
             content=ft.Row([
-                ft.Image(width=50, height=50, fit=ft.ImageFit.COVER),
+                self._preview,
                 ft.IconButton(
                     icon=ft.Icons.CLOSE,
                     icon_size=16,
@@ -46,9 +51,11 @@ class MsgSender(ft.Stack):
                 )
             ]),
             visible=False,
-            bgcolor=ft.Colors.with_opacity(0.2, "#000000"),
+            bgcolor=ft.Colors.with_opacity(0.2, "#F69E9E"),
             border_radius=10,
             padding=5,
+            bottom=0,
+            right=0,
         )
         
         self.input = ft.TextField(
@@ -90,8 +97,8 @@ class MsgSender(ft.Stack):
         )
         
         self.controls.append(self.file_picker)
-        self.controls.append(self.image_preview)
         self.controls.append(self.input)
+        self.controls.append(self.image_preview)
         self.controls.append(self.attach_btn)
         self.controls.append(self.send_btn)
     
@@ -102,14 +109,16 @@ class MsgSender(ft.Stack):
             self.attached_image_path = Path(file.path)
             
             # Показываем превью
-            self.image_preview.content.controls[0].src = str(self.attached_image_path)
+            self._preview.src = str(self.attached_image_path)
             self.image_preview.visible = True
+            self.attach_btn.visible = False
             self.update()
     
     def _remove_image(self, e):
         """Удаление прикреплённого изображения"""
         self.attached_image_path = None
         self.image_preview.visible = False
+        self.attach_btn.visible = True
         self.update()
     
     async def _send(self, e):
