@@ -202,6 +202,8 @@ class MsgContainerTheme(BaseModel):
     )
     avatar_theme: AvatarTheme = Field(default=AvatarTheme())
     msg_txt_theme: MsgTextTheme = Field(default=MsgTextTheme())
+    img_width: int = Field(300, description="Ширина картинок")
+    img_height: int = Field(300, description="Высота картинок")
 
 class ChatContainerTheme(BaseModel):
     width: OptionalNumber = Field(550, description="Ширина чата")
@@ -314,6 +316,7 @@ class MsgContainer(ft.Container):
             role: str,
             msg_txt: str,
             thought_txt: Optional[str] = None,
+            image_path: Optional[Path] = None,
             theme: Optional[MsgContainerTheme] = None,
             **kwargs
     ):
@@ -332,6 +335,14 @@ class MsgContainer(ft.Container):
             thought_txt=thought_txt,
             theme=theme.msg_txt_theme
         )
+
+        if image_path is not None:
+            self.img = ft.Image(
+                src=str(image_path),
+                width=theme.img_width,
+                height=theme.img_height
+            )
+            self.txtmsgcolumn.controls.append(self.img)
 
         self.content = ft.Row(
             controls=[
