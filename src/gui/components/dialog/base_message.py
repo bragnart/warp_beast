@@ -191,8 +191,8 @@ class MsgTextTheme(BaseModel):
     thoughts_icon: str = Field(ft.Icons.DATA_OBJECT, description="Иконка для кнопки мыслей")
 
 class MsgContainerTheme(BaseModel):
-    width: OptionalNumber = Field(500, description="Ширина контейнера сообщения")
-    height: OptionalNumber = Field(200, description="Высота контейнера сообщения")
+    width: OptionalNumber = Field(510, description="Ширина контейнера сообщения")
+    height: OptionalNumber = Field(180, description="Высота контейнера сообщения")
     border_radius: int = Field(20, description="Радиус скругления")
     border_color: ColorValue = Field(ft.Colors.BLACK45, description="Цвет границы")
     border_width: float = Field(1.0, description="Толщина границы")
@@ -207,7 +207,7 @@ class MsgContainerTheme(BaseModel):
 
 class ChatContainerTheme(BaseModel):
     width: OptionalNumber = Field(550, description="Ширина чата")
-    height: OptionalNumber = Field(670, description="Высота чата")
+    height: OptionalNumber = Field(600, description="Высота чата")
     bgcolor: ColorValue = Field(ft.Colors.ON_SURFACE, description="Фон чата")
     scroll: ft.ScrollMode = Field(ft.ScrollMode.ALWAYS, description="Режим скролла")
     block_spacing: int = Field(15, description="Отступ между сообщениями")
